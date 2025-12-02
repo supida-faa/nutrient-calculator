@@ -271,8 +271,6 @@
       const nOrgPer = outPerUnit(nOrgHa);
       const nTotPer = outPerUnit(nTotHa);
       const nPer = $('#nSummaryPer');
-      if (nPer) nPer.textContent = `N total: ${fmt(nTotPer)} | N from synthetic: ${fmt(nChemPer)} | N from organic: ${fmt(nOrgPer)}`;
-
       const tot = $('#totalBody');
       tot.innerHTML = '';
       let tN = 0, tP = 0, tK = 0;
@@ -293,7 +291,6 @@
       const nOrgTot = nOrgHa * areaHa;
       const nTotTot = nTotHa * areaHa;
       const nTot = $('#nSummaryTot');
-      if (nTot) nTot.textContent = `N total (plot): ${fmt(nTotTot)} | N from synthetic: ${fmt(nChemTot)} | N from organic: ${fmt(nOrgTot)}`;
     }
 
     $('#addChemBtn').onclick = () => makeChemRow();

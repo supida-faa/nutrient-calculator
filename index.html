@@ -24,7 +24,7 @@
     .btn-danger{background:transparent;border-color:var(--danger);color:var(--danger)}
     table{width:100%;border-collapse:collapse;border:1px solid var(--border);overflow:hidden;border-radius:12px}
     th,td{padding:10px 8px;border-bottom:1px dashed #1e293b;text-align:right}
-    th:first-child,td:first-child{text-align:left}
+    th:first-child,td:first-child{text-align:center}
     tfoot td{font-weight:700}
     .small{font-size:12px;color:var(--muted)}
     .tag{display:inline-block;padding:4px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--muted);margin-right:6px;margin-bottom:4px}
@@ -35,7 +35,7 @@
 <body>
   <div class="container">
     <h1>Crop Nutrient Calculator (Public)</h1>
-    <p class="lead">Public version: Enter organic N values manually. Application rate depends on land unit.</p>
+    <p class="lead">Enter organic N values manually. Application rate depends on land unit.</p>
 
     <div class="grid grid-2">
       <section class="card">
@@ -139,11 +139,11 @@
     function rateUnitLabel() { return currentUnit() === 'ha' ? 'kg/ha' : 'kg/rai'; }
 
     function updateRateLabels() {
-      const u = rateUnitLabel();
+      const unit = currentUnit() === 'ha' ? 'ha' : 'rai';
       const head = $('#chemRateHead');
-      if (head) head.textContent = u;
+      if (head) head.textContent = `Application Rate (kg/${unit})`;
       const oh = $('#organicRateHead');
-      if (oh) oh.textContent = `Rate (${u})`;
+      if (oh) oh.textContent = `Application Rate (kg/${unit})`;
     }
 
     function makeChemRow(n = 16, p = 16, k = 8, rate = 150) {
@@ -270,6 +270,8 @@
       const nChemPer = outPerUnit(nChemHa);
       const nOrgPer = outPerUnit(nOrgHa);
       const nTotPer = outPerUnit(nTotHa);
+      const nPer = $('#nSummaryPer');
+      if (nPer) nPer.textContent = `N total: ${fmt(nTotPer)} | N from synthetic: ${fmt(nChemPer)} | N from organic: ${fmt(nOrgPer)}`;
 
       const tot = $('#totalBody');
       tot.innerHTML = '';
@@ -290,6 +292,8 @@
       const nChemTot = nChemHa * areaHa;
       const nOrgTot = nOrgHa * areaHa;
       const nTotTot = nTotHa * areaHa;
+      const nTot = $('#nSummaryTot');
+      if (nTot) nTot.textContent = `N total (plot): ${fmt(nTotTot)} | N from synthetic: ${fmt(nChemTot)} | N from organic: ${fmt(nOrgTot)}`;
     }
 
     $('#addChemBtn').onclick = () => makeChemRow();

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crop Nutrient Calculator (Public)</title>
+  <style>
+    :root{--bg:#064635;--card:#111827;--muted:#94a3b8;--text:#e5e7eb;--accent:#22d3ee;--accent2:#34d399;--danger:#f87171;--border:#1f2937}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .container{max-width:1100px;margin:auto;padding:24px}
+    h1{font-size:clamp(20px,3vw,30px);margin:0 0 8px}
+    p.lead{margin:0 0 20px;color:var(--muted)}
+    .grid{display:grid;gap:16px}
+    @media (min-width:900px){.grid-2{grid-template-columns:1.2fr 1fr}}
+    .card{background:rgba(17,24,39,.7);backdrop-filter:saturate(140%) blur(6px);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input,select,button{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0b1222;color:var(--text)}
+    .btn{cursor:pointer;font-weight:600;border:1px solid transparent;transition:transform .06s,box-shadow .2s,background .2s}
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b1020}
+    .btn-ghost{background:transparent;border-color:var(--border);color:var(--text)}
+    .btn-danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+    table{width:100%;border-collapse:collapse;border:1px solid var(--border);overflow:hidden;border-radius:12px}
+    th,td{padding:10px 8px;border-bottom:1px dashed #1e293b;text-align:right}
+    th:first-child,td:first-child{text-align:left}
+    tfoot td{font-weight:700}
+    .small{font-size:12px;color:var(--muted)}
+    .tag{display:inline-block;padding:4px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;color:var(--muted);margin-right:6px;margin-bottom:4px}
+    .hr{height:1px;background:var(--border);margin:14px 0}
+    .flex-row{display:flex;gap:8px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Crop Nutrient Calculator (Public)</h1>
+    <p class="lead">Public version: Enter organic N values manually. Application rate depends on land unit.</p>
+
+    <div class="grid grid-2">
+      <section class="card">
+        <h2>Basic Settings</h2>
+        <div class="row">
+          <div>
+            <label>Land Size</label>
+            <input id="areaValue" type="number" min="0" step="0.0001" />
+            <div class="small">1 rai = 0.16 ha</div>
+          </div>
+          <div>
+            <label>Land Unit</label>
+            <select id="areaUnit">
+              <option value="ha">ha</option>
+              <option value="rai" selected>rai</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>Synthetic Fertilizer</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>N%</th><th>P₂O₅%</th><th>K₂O%</th><th id="chemRateHead">Application Rate (kg/rai)</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="chemBody"></tbody>
+        </table>
+        <div style="margin-top:10px;display:flex;justify-content:flex-end">
+          <button class="btn btn-ghost" id="addChemBtn">+ Add synthetic row</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>Organic Fertilizer</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Organic N</th>
+              <th>N Unit</th>
+              <th id="organicRateHead">Application Rate (kg/rai)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="organicBody"></tbody>
+        </table>
+        <div style="margin-top:10px;display:flex;justify-content:flex-end">
+          <button class="btn btn-ghost" id="addOrganicBtn">+ Add organic row</button>
+        </div>
+
+        <div class="hr"></div>
+        <button id="calcBtn" class="btn btn-primary">Calculate</button>
+        <button id="resetBtn" class="btn btn-ghost">Reset</button>
+      </section>
+
+      <section class="card">
+        <h2>Results</h2>
+        <div class="flex-row">
+          <div id="tags"></div>
+          <div>
+            <label class="small">Output Unit</label>
+            <select id="outputUnit">
+              <option value="ha">ha</option>
+              <option value="rai" selected>rai</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <h3 id="perUnitTitle">Per rai</h3>
+        <table>
+          <thead><tr><th>Source</th><th>N</th><th>P₂O₅</th><th>K₂O</th></tr></thead>
+          <tbody id="perHaBody"></tbody>
+          <tfoot><tr><td>Total</td><td id="sumNHa">0</td><td id="sumPHa">0</td><td id="sumKHa">0</td></tr></tfoot>
+        </table>
+        <div class="small" id="nSummaryPer" style="margin-top:6px"></div>
+
+        <div class="hr"></div>
+        <h3>Total (Whole Plot)</h3>
+        <table>
+          <thead><tr><th>Source</th><th>N</th><th>P₂O₅</th><th>K₂O</th></tr></thead>
+          <tbody id="totalBody"></tbody>
+          <tfoot><tr><td>Total</td><td id="sumNTot">0</td><td id="sumPTot">0</td><td id="sumKTot">0</td></tr></tfoot>
+        </table>
+        <div class="small" id="nSummaryTot" style="margin-top:6px"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = q => document.querySelector(q);
+    const toNum = v => isFinite(parseFloat(v)) ? parseFloat(v) : 0;
+    const fmt = (n, d = 2) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: d });
+
+    const chemBody = $('#chemBody');
+    const organicBody = $('#organicBody');
+
+    function currentUnit() { return $('#areaUnit').value; }
+    function rateUnitLabel() { return currentUnit() === 'ha' ? 'kg/ha' : 'kg/rai'; }
+
+    function updateRateLabels() {
+      const u = rateUnitLabel();
+      const head = $('#chemRateHead');
+      if (head) head.textContent = u;
+      const oh = $('#organicRateHead');
+      if (oh) oh.textContent = `Rate (${u})`;
+    }
+
+    function makeChemRow(n = 16, p = 16, k = 8, rate = 150) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="number" step="0.01" placeholder="${n}"/></td>
+        <td><input type="number" step="0.01" placeholder="${p}"/></td>
+        <td><input type="number" step="0.01" placeholder="${k}"/></td>
+        <td><input type="number" step="0.01" placeholder="${rate}"/></td>
+        <td><button class="btn btn-danger">Delete</button></td>
+      `;
+      tr.querySelector('button').onclick = () => tr.remove();
+      chemBody.appendChild(tr);
+    }
+
+    function makeOrganicRow(n = 0, nUnit = 'pct', rate = 50) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="number" step="0.0001" placeholder="${n}"/></td>
+        <td>
+          <select>
+            <option value="pct">%N</option>
+            <option value="n_ton">kg N/ton</option>
+          </select>
+        </td>
+        <td><input type="number" step="0.01" placeholder="${rate}"/></td>
+        <td><button class="btn btn-danger">Delete</button></td>
+      `;
+      const sel = tr.querySelector('select');
+      sel.value = nUnit;
+      tr.querySelector('button').onclick = () => tr.remove();
+      organicBody.appendChild(tr);
+    }
+
+    function getAreaHa() {
+      const val = toNum($('#areaValue').value);
+      return currentUnit() === 'ha' ? val : val * 0.16;
+    }
+
+    function toHa(v) {
+      return currentUnit() === 'ha' ? v : v / 0.16;
+    }
+
+    function outPerUnit(vHa) {
+      return $('#outputUnit').value === 'ha' ? vHa : vHa * 0.16;
+    }
+
+    function collectChem() {
+      return [...chemBody.querySelectorAll('tr')].map(tr => {
+        const t = tr.querySelectorAll('input');
+        const n = toNum(t[0].value);
+        const p = toNum(t[1].value);
+        const k = toNum(t[2].value);
+        const rate = toNum(t[3].value);
+        const rateHa = toHa(rate);
+        return { n: rateHa * n / 100, p: rateHa * p / 100, k: rateHa * k / 100, type: 'chem' };
+      });
+    }
+
+    function collectOrganicItems() {
+      const rows = [...organicBody.querySelectorAll('tr')];
+      return rows.map(tr => {
+        const inputs = tr.querySelectorAll('input');
+        const sel = tr.querySelector('select');
+        const n = toNum(inputs[0].value);
+        const rate = toNum(inputs[1].value);
+        const nUnit = sel.value;
+        if (!n || !rate) return null;
+        const rateHa = toHa(rate);
+        let N = 0;
+        if (nUnit === 'pct') N = rateHa * n / 100;
+        else N = rateHa * (n / 1000);
+        return { n: N, p: 0, k: 0, type: 'org' };
+      }).filter(x => x !== null);
+    }
+
+    function calculate() {
+      const areaHa = getAreaHa();
+      const chemItems = collectChem();
+      const orgItems = collectOrganicItems();
+
+      const chemAgg = {
+        label: 'Synthetic (total)',
+        type: 'chem',
+        n: chemItems.reduce((s, x) => s + x.n, 0),
+        p: chemItems.reduce((s, x) => s + x.p, 0),
+        k: chemItems.reduce((s, x) => s + x.k, 0)
+      };
+      const orgAgg = {
+        label: 'Organic (total)',
+        type: 'org',
+        n: orgItems.reduce((s, x) => s + x.n, 0),
+        p: orgItems.reduce((s, x) => s + x.p, 0),
+        k: orgItems.reduce((s, x) => s + x.k, 0)
+      };
+
+      const aggItems = [];
+      if (chemAgg.n + chemAgg.p + chemAgg.k > 0) aggItems.push(chemAgg);
+      if (orgAgg.n + orgAgg.p + orgAgg.k > 0) aggItems.push(orgAgg);
+
+      const outUnit = $('#outputUnit').value === 'ha' ? 'ha' : 'rai';
+      const perTitle = $('#perUnitTitle');
+      if (perTitle) perTitle.textContent = `Per ${outUnit}`;
+
+      const tbody = $('#perHaBody');
+      tbody.innerHTML = '';
+      let sN = 0, sP = 0, sK = 0;
+      aggItems.forEach(it => {
+        const nU = outPerUnit(it.n);
+        const pU = outPerUnit(it.p);
+        const kU = outPerUnit(it.k);
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${it.label}</td><td>${fmt(nU)}</td><td>${fmt(pU)}</td><td>${fmt(kU)}</td>`;
+        tbody.appendChild(row);
+        sN += nU; sP += pU; sK += kU;
+      });
+      $('#sumNHa').textContent = fmt(sN);
+      $('#sumPHa').textContent = fmt(sP);
+      $('#sumKHa').textContent = fmt(sK);
+
+      const nChemHa = chemAgg.n;
+      const nOrgHa = orgAgg.n;
+      const nTotHa = nChemHa + nOrgHa;
+      const nChemPer = outPerUnit(nChemHa);
+      const nOrgPer = outPerUnit(nOrgHa);
+      const nTotPer = outPerUnit(nTotHa);
+
+      const tot = $('#totalBody');
+      tot.innerHTML = '';
+      let tN = 0, tP = 0, tK = 0;
+      aggItems.forEach(it => {
+        const n = it.n * areaHa;
+        const p = it.p * areaHa;
+        const k = it.k * areaHa;
+        tN += n; tP += p; tK += k;
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${it.label}</td><td>${fmt(n)}</td><td>${fmt(p)}</td><td>${fmt(k)}</td>`;
+        tot.appendChild(row);
+      });
+      $('#sumNTot').textContent = fmt(tN);
+      $('#sumPTot').textContent = fmt(tP);
+      $('#sumKTot').textContent = fmt(tK);
+
+      const nChemTot = nChemHa * areaHa;
+      const nOrgTot = nOrgHa * areaHa;
+      const nTotTot = nTotHa * areaHa;
+    }
+
+    $('#addChemBtn').onclick = () => makeChemRow();
+    $('#addOrganicBtn').onclick = () => makeOrganicRow();
+    $('#calcBtn').onclick = calculate;
+    $('#resetBtn').onclick = () => location.reload();
+
+    $('#areaUnit').addEventListener('change', updateRateLabels);
+    $('#outputUnit').addEventListener('change', calculate);
+
+    makeChemRow(16, 16, 8, 150);
+    makeOrganicRow();
+    updateRateLabels();
+  </script>
